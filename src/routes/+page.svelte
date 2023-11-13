@@ -1,113 +1,105 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
+	import { onMount } from 'svelte';
 	import { decodeBase64 } from 'oslo/encoding';
-    import '../app.postcss';
+	import '../app.postcss';
 
-    let messages: Array<Message> = [];
+	let messages: Array<Message> = [];
 
-    const sendMessage = async (event: any): Promise<void> => {
-        const formData = new FormData(event.target as HTMLFormElement);
-        const username = formData.get("username");
-        const body = formData.get("body");
+	const sendMessage = async (event: any): Promise<void> => {
+		const formData = new FormData(event.target as HTMLFormElement);
+		const username = formData.get('username');
+		const body = formData.get('body');
 
-        if (
-            (!username || !body) ||
-            (typeof username !== "string" || typeof body !== "string")
-        ) return;
+		if (!username || !body || typeof username !== 'string' || typeof body !== 'string') return;
 
-        await fetch("/api/message", {
-            method: "POST",
-            body: JSON.stringify({
-                username,
-                body
-            })
-        });
-    }
+		await fetch('/api/message', {
+			method: 'POST',
+			body: JSON.stringify({
+				username,
+				body
+			})
+		});
+	};
 
-    const renderMessage = (message: Message): void => {
-        messages = [...messages, message];
-    }
+	const renderMessage = (message: Message): void => {
+		messages = [...messages, message];
+	};
 
-    const listen = async (): Promise<void> => {
-        const response = await fetch("/api/messages");
-        
-        if (!response.body)
-            throw new Error("Invalid response body.");
+	const listen = async (): Promise<void> => {
+		const response = await fetch('/api/messages');
 
-        const reader = response.body.getReader();
+		if (!response.body) throw new Error('Invalid response body.');
 
-        let result = await reader.read();
-        let lastChunk = "";
+		const reader = response.body.getReader();
 
-        while (!result.done) {
-            const value = lastChunk + new TextDecoder().decode(result.value);
-            const chunks = value.split("\n\n");
-            const completedGroup = chunks.slice(0, -1);
+		let result = await reader.read();
+		let lastChunk = '';
 
-            lastChunk = chunks.at(-1) ?? "";
-            for (const chunk of completedGroup) {                
-                const lines = chunk.split("\n").filter(value => value != "");
+		while (!result.done) {
+			const value = lastChunk + new TextDecoder().decode(result.value);
+			const chunks = value.split('\n\n');
+			const completedGroup = chunks.slice(0, -1);
 
-                const maybeEventLine = lines.at(0);
+			lastChunk = chunks.at(-1) ?? '';
+			for (const chunk of completedGroup) {
+				const lines = chunk.split('\n').filter((value) => value != '');
+				const maybeEventLine = lines.at(0);
 
-                let event: string | null = null;
+				let event: string | null = null;
 
-                if (maybeEventLine && maybeEventLine.startsWith("event: ")) {
-                    event = maybeEventLine.replace("event: ", "");
-                    lines.shift();
-                }
+				if (maybeEventLine && maybeEventLine.startsWith('event: ')) {
+					event = maybeEventLine.replace('event: ', '');
+					lines.shift();
+				}
 
-                if (event !== "message") {
-                    throw new Error("Event no defined.");
-                }
+				if (event !== 'message') {
+					throw new Error('Event no defined.');
+				}
 
-                for (const line of lines) {
-                    if (!line.startsWith("data: "))
-                        throw new Error(`Expected data, got:\n${line}`);
-                    
-                    const messageJson: MessageJSON = JSON.parse(
-                        new TextDecoder().decode(
-                            decodeBase64(line.replace("data: ", ""))
-                            )
-                        );
+				for (const line of lines) {
+					if (!line.startsWith('data: ')) throw new Error(`Expected data, got:\n${line}`);
 
-                    const { username, body, timestamp } = messageJson;
+					const messageJson: MessageJSON = JSON.parse(
+						new TextDecoder().decode(decodeBase64(line.replace('data: ', '')))
+					);
 
-                    renderMessage({
-                        username,
-                        body,
-                        date: new Date(timestamp * 1000)
-                    });
-                }
-            }
+					const { username, body, timestamp } = messageJson;
 
-            result = await reader.read();
-        }
-    }
+					renderMessage({
+						username,
+						body,
+						date: new Date(timestamp * 1000)
+					});
+				}
+			}
 
-    onMount(listen);
+			result = await reader.read();
+		}
+	};
+
+	onMount(listen);
 </script>
 
 <h1 class="text-2xl font-semibold">Realtime chat with Fetch API</h1>
 
 <div class="border-b py-4">
-    <form method="post" action="/api/message" on:submit|preventDefault={sendMessage}>
-        <label class="mt-2" for="username">Username</label><br />
-        <input class="w-full border p-1" type="text" name="username" />
-        
-        <label class="mt-2" for="message-value">Message</label><br />
-        <input class="w-full border p-1" type="text" name="body" />
+	<form method="post" action="/api/message" on:submit|preventDefault={sendMessage}>
+		<label class="mt-2" for="username">Username</label><br />
+		<input class="w-full border p-1" type="text" name="username" />
 
-        <button class="px-4 bg-black text-white mt-2" type="submit">Send</button>
-    </form>
+		<label class="mt-2" for="message-value">Message</label><br />
+		<input class="w-full border p-1" type="text" name="body" />
 
-    <div class="flex flex-col gap-y-4 pt-8">
-    {#each messages as { username, body, date }}
-        <div class="flex gap-x-2 mb-1">
-            <p class="font-medium">{username}</p>
-            <p class="text-zinc-400">Sent at {date.toLocaleString()}</p>
-        </div>
-        <p>{body}</p>
-    {/each}
-    </div>
+		<button class="px-4 bg-black text-white mt-2" type="submit">Send</button>
+	</form>
+
+	<div class="flex flex-col gap-y-4 pt-8">
+		{#each messages as { username, body, date }}
+			<div class="flex gap-x-2 mb-1">
+				<p class="font-medium">{username}</p>
+				<p class="text-zinc-400">Sent at {date.toLocaleString()}</p>
+			</div>
+			<p>{body}</p>
+		{/each}
+	</div>
 </div>
