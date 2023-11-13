@@ -7,6 +7,23 @@ declare global {
 		// interface PageData {}
 		// interface Platform {}
 	}
+
+	interface MessageJSON {
+		username: string;
+		body: string;
+		timestamp: number;
+	}
+
+	interface Message {
+		username: string;
+		body: string;
+		date: Date;
+	}
+
+	interface RequestBody {
+		username: string;
+		body: string;
+	}
 }
 
 export {};
