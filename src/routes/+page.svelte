@@ -19,10 +19,12 @@
 				body
 			})
 		});
+
+		(event.target[1] as HTMLInputElement).value = '';
 	};
 
 	const renderMessage = (message: Message): void => {
-		messages = [...messages, message];
+		messages = [message, ...messages];
 	};
 
 	const listen = async (): Promise<void> => {
@@ -90,12 +92,12 @@
 		<label class="mt-2" for="message-value">Message</label><br />
 		<input class="w-full border p-1" type="text" name="body" />
 
-		<button class="px-4 bg-black text-white mt-2" type="submit">Send</button>
+		<button class="mt-2 bg-black px-4 text-white" type="submit">Send</button>
 	</form>
 
 	<div class="flex flex-col gap-y-4 pt-8">
 		{#each messages as { username, body, date }}
-			<div class="flex gap-x-2 mb-1">
+			<div class="mb-1 flex gap-x-2">
 				<p class="font-medium">{username}</p>
 				<p class="text-zinc-400">Sent at {date.toLocaleString()}</p>
 			</div>
