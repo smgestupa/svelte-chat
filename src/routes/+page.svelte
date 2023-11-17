@@ -22,7 +22,7 @@
 	};
 
 	const renderMessage = (message: Message): void => {
-		messages = [...messages, message];
+		messages = [message, ...messages];
 	};
 
 	const listen = async (): Promise<void> => {
