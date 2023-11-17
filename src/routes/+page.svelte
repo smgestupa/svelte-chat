@@ -19,6 +19,8 @@
 				body
 			})
 		});
+
+		(event.target[1] as HTMLInputElement).value = "";
 	};
 
 	const renderMessage = (message: Message): void => {
